@@ -9,6 +9,14 @@
  *                            {0, in, 0, 0, 0, 0, 0, 0} if sel == 001
  *                            etc.
  *                            {0, 0, 0, 0, 0, 0, 0, in} if sel == 111
+ * 000
+ * 001
+ * 010
+ * 011
+ * 100
+ * 101
+ * 110
+ * 111
  */
 
 CHIP DMux8Way {
@@ -17,4 +25,14 @@ CHIP DMux8Way {
 
     PARTS:
     // Put your code here:
+        DMux (in=in, sel=sel[2], a=upper, b=lower);
+
+        DMux (in=upper, sel=sel[1], a=upperupper, b=upperlower);
+        DMux (in=lower, sel=sel[1], a=lowerupper, b=lowerlower);
+
+        DMux (in=upperupper, sel=sel[0], a=a, b=b);
+        DMux (in=upperlower, sel=sel[0], a=c, b=d);
+        DMux (in=lowerupper, sel=sel[0], a=e, b=f);
+        DMux (in=lowerlower, sel=sel[0], a=g, b=h);
+
 }

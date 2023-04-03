@@ -17,4 +17,11 @@ CHIP DMux4Way {
 
     PARTS:
     // Put your code here:
+
+    // this was surprisingly elegant, spent longer than I care to admit to get thi
+    DMux (in=in, sel=sel[0], a=at, b=bt);
+    DMux (in=at, sel=sel[1], a=a, b=c);
+    DMux (in=bt, sel=sel[1], a=b, b=d);
+    // probably better for generalisation do this the reversed way
+    // See DMux8Way.hdl
 }
