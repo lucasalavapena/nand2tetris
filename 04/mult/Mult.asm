@@ -9,4 +9,40 @@
 // This program only needs to handle arguments that satisfy
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
-// Put your code here.
+// Must use symbolic variables
+// 
+
+// make RAM[2] == 0
+// Main loop
+
+@2
+M=0
+
+@0
+D=M
+@END
+D;JEQ
+@1
+D=M
+@END
+D;JEQ
+
+(LOOP)
+    @1
+    D=M
+    @2
+    D=D+M 
+    @2
+    M=D       
+
+    @0
+    M=M-1
+    @0
+    D=M
+
+    @LOOP
+    D;JNE
+
+(END)
+    @END 
+    0;JMP
