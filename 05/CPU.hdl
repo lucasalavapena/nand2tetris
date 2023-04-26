@@ -39,36 +39,53 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-
-    Mux16(a=instruction, b=aluOut, sel=instruction[15], out=aRegIn);
+    // Should I use register or A and D register
 
     Not(in=instruction[15], out=isAInstruction);
+    Not(in=isAInstruction, out=isCInstruction);
+
+
+    Mux16(a=instruction, b=aluOut, sel=isCInstruction, out=aRegIn);
+
     // d1
-    And(a=instruction[15], b=instruction[5], out=CInstWritesToAReg);
+    And(a=isCInstruction, b=instruction[5], out=CInstWritesToAReg);
     Or(a=isAInstruction, b=CInstWritesToAReg, out=shouldWriteAReg);
 
     // A register
-    Register(in=aRegIn, load=shouldWriteAReg, out=aReg, out[0..14]=addressM);
+    ARegister(in=aRegIn, load=shouldWriteAReg, out=aReg, out[0..14]=addressM);
 
     // TODO: sel may be wrong in some cases. A instruction case??
-    Mux16(a=aReg, b=inM, sel=instruction[12], out=AluX);
+    Mux16(a=aReg, b=inM, sel=instruction[12], out=AluAM);
     // D register  d2
-    And(a=instruction[15], b=instruction[4], out=CInstWritesToDReg);
+    And(a=isCInstruction, b=instruction[4], out=CInstWritesToDReg);
+    //
+    DRegister(in=aluOut, load=CInstWritesToDReg, out=AluD);
 
-    Register(in=aluOut, load=CInstWritesToDReg, out=AluY);
-
-    ALU(x=AluX, y=AluY, zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], zr=ignore, ng=ignored, out=aluOut, out=outM);
+    ALU(x=AluD, y=AluAM, zx=instruction[11], nx=instruction[10], zy=instruction[9],
+     ny=instruction[8], f=instruction[7], no=instruction[6], out=aluOut, out=outM, zr=zr, ng=ng);
     
     // writeM == d3?
-    And(a=instruction[3], b=true, out=writeM);
+    And(a=instruction[3], b=isCInstruction, out=writeM);
     
     // load == jumps!! or something. Very close.
+    // need to use zr and ng
+    
+    // is positive
+    Or(a=zr, b=ng, out=isnonpositive);
+    Not(in=isnonpositive, out=ispositive);
 
-    // 3 way or for j bits
-    Or(a=instruction[2], b=instruction[1], out=j1orj2);
-    Or(a=j1orj2,b=instruction[0],out=j1orj2orj3);
+    And(a=instruction[2], b=ng, out=j1neg); 
+    And(a=instruction[1], b=zr, out=j2zr);
+    And(a=instruction[0], b=ispositive, out=j3pos);
 
-    PC( in=aReg, load=j1orj2orj3, inc=true, reset=reset, out=dumbo, out[0..14]=pc);
+    // 3 way for j bits
+    Or(a=j1neg, b=j2zr, out=j1orj2);
+    Or(a=j1orj2,b=j3pos,out=jumpifC);
+
+    // ALSO NEED TO CHECK IF C Instruction
+    And(a=jumpifC, b=isCInstruction, out=jump);
+
+    PC( in=aReg, load=jump, inc=true, reset=reset, out=dumbo, out[0..14]=pc);
 
 
 }

@@ -27,5 +27,19 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    DMux(in=load, sel=address[14], a=ramLOAD, b=screenLOAD);
+
+    RAM16K(in=in, load=ramLOAD, address=address[0..13], out=ramOUT);
+    Screen(in=in, load=screenLOAD, address=address[0..12], out=screenOUT);
+    Keyboard(out=keyboardOUT);
+
+    // overlap in memory address is that fine???, is probably fine with a and b being 
+        /**
+    * 4-way 16-bit multiplexor:
+    * out = a if sel == 00
+    *       b if sel == 01
+    *       c if sel == 10
+    *       d if sel == 11
+    */
+    Mux4Way16(a=ramOUT, b=ramOUT, c=screenOUT, d=keyboardOUT, sel=address[13..14], out=out);
 }
