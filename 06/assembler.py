@@ -87,21 +87,8 @@ C_INSTRUCTION_JUMP = {
 }
 
 
-C_INSTRUCTION_REGEX = re.compile(r"(?P<dest>[MDA]{0,3})={0,1}(?P<comp>[01-DAM!+&|]{0,3});{0,1}(?P<jump>[JGTEQLNMP]{0,3})")
+C_INSTRUCTION_REGEX = re.compile(r"(?P<dest>[MDA]{0,1})(?:=)?(?P<comp>[01ADM!+&|-]{1,3})(?:;(?P<jump>[JGTMEQLNP]{1,3}))?")
 
-# Some ideas<
-
-# (?P<dest>[MDA]{0,3}){0,1}={0,1}(?P<comp>[01-DAM!+&|]{0,3});{0,1}(?P<jump>[JGTEQLNMP]{0,3})
-# # Define the pattern with end-of-string anchor
-# pattern = r'group(?==|$)'
-
-# (?P<dest>[MDA]{0,3})(?==|$)={0,1}
-
-# (?P<comp>[01-DAM!+&|]{0,3});{0,1}(?P<jump>[JGTEQLNMP]{0,3})
-
-# (?P<dest>[MDA]{0,3})(?==|$)={0,1}(?P<comp>[01-DAM!+&|]{0,3})(?=;|$);{0,1}(?P<jump>[JGTEQLNMP]{0,3})
-
-# (?P<dest>[MDA]{0,1})(?:=)?(?P<comp>[01ADM!+&|-]{1,3})(?:;(?P<jump>[JGTEQLNP]{1,3}))?
 
 def remove_whitespace_gen(inp):
     for element in inp:
@@ -131,11 +118,12 @@ def transform(line_text: str, symbol_table: Dict[str, int], current_variable_loc
     # check that it matches the C instruction else raise exception
     match = re.match(C_INSTRUCTION_REGEX, line_text)
     if not match:
+        breakpoint()
         raise Exception("Invalid Assmebly??")
 
-    dest = match.group("dest")
-    comp = match.group("comp")
-    jump = match.group("jump")
+    dest = match.group("dest") 
+    comp = match.group("comp") or ""
+    jump = match.group("jump") or ""
     a_bit = 1 if "M" in comp else 0 
     try:
         instruction = f"111{a_bit}{C_INSTRUCTION_COMP[comp]:06b}{C_INSTRUCTION_DEST[dest]:03b}{C_INSTRUCTION_JUMP[jump]:03b}"
@@ -169,8 +157,8 @@ def main(path: Path):
         rf.seek(0)
         # Second pass
         for line_no, line in enumerate(remove_whitespace_gen(rf), 1):
-            # if line empty or a comment continue
-            if line == "" or line[:2] == "//":
+            # if line empty or a comment continue or label
+            if line == "" or line[:2] == "//" or line[0] == "(" and line[-1] == ")":
                 print(f"skipping {line_no}")
                 continue
             line, symbol_table, current_variable_loc = transform(line, symbol_table, current_variable_loc)

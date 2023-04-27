@@ -54,7 +54,7 @@ CHIP CPU {
     // A register
     ARegister(in=aRegIn, load=shouldWriteAReg, out=aReg, out[0..14]=addressM);
 
-    // TODO: sel may be wrong in some cases. A instruction case??
+    // A instruction side effect here are irrelevant
     Mux16(a=aReg, b=inM, sel=instruction[12], out=AluAM);
     // D register  d2
     And(a=isCInstruction, b=instruction[4], out=CInstWritesToDReg);
