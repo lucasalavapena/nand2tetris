@@ -68,11 +68,11 @@ C_INSTRUCTION_DEST = {
     "": int("0b000", 2),
     "M": int("0b001", 2),
     "D": int("0b010", 2),
-    "DM": int("0b011", 2),
+    "MD": int("0b011", 2),
     "A": int("0b100", 2),
     "AM": int("0b101", 2),
     "AD": int("0b110", 2),
-    "ADM": int("0b111", 2),
+    "AMD": int("0b111", 2),
 }
 
 C_INSTRUCTION_JUMP = {
@@ -95,6 +95,24 @@ def remove_whitespace_gen(inp):
         yield element.strip().replace(" ", "") 
 
 
+def match_c_instruction(line_text):
+    if "=" in line_text:
+        dest, *rest = line_text.split("=")
+        remaing_str = "".join(rest)
+        if ";" in remaing_str:
+            comp, jump = remaing_str.split(";")
+            assert isinstance(jump, str)
+        else:
+            comp = remaing_str
+            jump = ""
+
+    else:
+        dest = ""
+        assert ";" in line_text, "C instruction does not have = or ; I do not think that is possible"
+        comp, jump = line_text.split(";")
+
+    return dest, comp, jump
+
 def transform(line_text: str, symbol_table: Dict[str, int], current_variable_loc: int):
     # A instruction
     if line_text[0] == "@": 
@@ -116,15 +134,17 @@ def transform(line_text: str, symbol_table: Dict[str, int], current_variable_loc
 
     # We assume C instruction   
     # check that it matches the C instruction else raise exception
-    match = re.match(C_INSTRUCTION_REGEX, line_text)
-    if not match:
-        breakpoint()
-        raise Exception("Invalid Assmebly??")
+    # match = re.match(C_INSTRUCTION_REGEX, line_text)
+    # if not match:
+    #     breakpoint()
+    #     raise Exception("Invalid Assmebly??")
 
-    dest = match.group("dest") 
-    comp = match.group("comp") or ""
-    jump = match.group("jump") or ""
+    dest, comp, jump = match_c_instruction(line_text)
+    # dest = match.group("dest") 
+    # comp = match.group("comp") or ""
+    # jump = match.group("jump") or ""
     a_bit = 1 if "M" in comp else 0 
+    # breakpoint()
     try:
         instruction = f"111{a_bit}{C_INSTRUCTION_COMP[comp]:06b}{C_INSTRUCTION_DEST[dest]:03b}{C_INSTRUCTION_JUMP[jump]:03b}"
     except:
@@ -143,15 +163,18 @@ def main(path: Path):
             open(path, mode="r") as rf,
             open(dest, mode="w") as wf,
     ):
+        line_counter = 0
         # First pass get all labels
-        for line_no, line in enumerate(remove_whitespace_gen(rf), 1):
-            if line == "":
+        for line in remove_whitespace_gen(rf):
+            if line == "" or line[:2] == "//":
                 continue
             # I assume this is faster than regex
             # L instruction
             if line[0] == "(" and line[-1] == ")":
                 label = line[1:-1]
-                symbol_table[label] = line_no  
+                symbol_table[label] = line_counter  
+            else:
+                line_counter += 1
 
         # reset generator/pointer
         rf.seek(0)
@@ -166,6 +189,11 @@ def main(path: Path):
             print(f"writing line {line_no}")
 
 if __name__ == "__main__":
+    """
+    example use:
+    python3 06/assembler.py /home/lap/Repos/nand2tetris/projects/06/max/Max.asm
+
+    """
     parser = argparse.ArgumentParser(description="Hack Assembler")
     parser.add_argument("path", type=Path, 
                         help="Path to input assembly file to input")
