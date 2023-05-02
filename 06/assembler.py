@@ -86,10 +86,6 @@ C_INSTRUCTION_JUMP = {
     "JMP": int("0b111", 2),
 }
 
-
-C_INSTRUCTION_REGEX = re.compile(r"(?P<dest>[MDA]{0,1})(?:=)?(?P<comp>[01ADM!+&|-]{1,3})(?:;(?P<jump>[JGTMEQLNP]{1,3}))?")
-
-
 def remove_whitespace_gen(inp):
     for element in inp:
         yield element.strip().replace(" ", "") 
@@ -133,22 +129,11 @@ def transform(line_text: str, symbol_table: Dict[str, int], current_variable_loc
             return f"{symbol_table[val]:016b}", symbol_table, current_variable_loc
 
     # We assume C instruction   
-    # check that it matches the C instruction else raise exception
-    # match = re.match(C_INSTRUCTION_REGEX, line_text)
-    # if not match:
-    #     breakpoint()
-    #     raise Exception("Invalid Assmebly??")
-
     dest, comp, jump = match_c_instruction(line_text)
-    # dest = match.group("dest") 
-    # comp = match.group("comp") or ""
-    # jump = match.group("jump") or ""
+
     a_bit = 1 if "M" in comp else 0 
-    # breakpoint()
-    try:
-        instruction = f"111{a_bit}{C_INSTRUCTION_COMP[comp]:06b}{C_INSTRUCTION_DEST[dest]:03b}{C_INSTRUCTION_JUMP[jump]:03b}"
-    except:
-        breakpoint()
+    instruction = f"111{a_bit}{C_INSTRUCTION_COMP[comp]:06b}{C_INSTRUCTION_DEST[dest]:03b}{C_INSTRUCTION_JUMP[jump]:03b}"
+
     return instruction, symbol_table, current_variable_loc
 
 
